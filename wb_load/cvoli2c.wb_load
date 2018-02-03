@@ -1,0 +1,108 @@
+Volume CVolI2C $ClassVolume 0.0.98.25 
+  Body SysBody 31-DEC-1969 19:00:00.00
+    Attr NextOix = "_X10"
+    Attr NextCix = "_X3"
+  EndBody
+  Object Class $ClassHier 2 03-FEB-2018 10:59:36.63
+    Object I2C_Adapter $ClassDef 1 03-FEB-2018 11:00:17.17
+      Body SysBody 03-FEB-2018 11:06:58.59
+        Attr Editor = 0
+        Attr Method = 0
+        Attr Flags = 10256
+      EndBody
+      Object RtBody $ObjBodyDef 1 03-FEB-2018 11:07:45.34
+        Body SysBody 03-FEB-2018 11:07:45.34
+          Attr StructName = "I2C_Adapter"
+          Attr NextAix = "_X3"
+        EndBody
+        Object Super $Attribute 2 03-FEB-2018 11:13:36.38
+          Body SysBody 03-FEB-2018 11:13:51.80
+            Attr PgmName = "Super"
+            Attr Size = 352
+            Attr Flags = 393216
+            Attr TypeRef = "BaseComponent:Class-BaseIORack"
+          EndBody
+        EndObject
+        Object Filename $Attribute 1 03-FEB-2018 11:08:28.84
+          Body SysBody 03-FEB-2018 11:08:41.33
+            Attr PgmName = "Filename"
+            Attr Size = 80
+            Attr TypeRef = "pwrs:Type-$String80"
+          EndBody
+        EndObject
+      EndObject
+      Object IoMethods $RtMethod 4 03-FEB-2018 11:18:31.73
+        Object IoRackInit $Method 6 03-FEB-2018 11:18:52.11
+          Body SysBody 03-FEB-2018 11:19:07.65
+            Attr MethodName = "I2C_Adapter-IoRackInit"
+          EndBody
+        EndObject
+        Object IoRackClose $Method 5 03-FEB-2018 11:19:19.01
+          Body SysBody 03-FEB-2018 11:19:26.39
+            Attr MethodName = "I2C_Adapter-IoRackClose"
+          EndBody
+        EndObject
+      EndObject
+      Object Template I2C_Adapter 2147975168 31-DEC-1969 19:00:00.00
+        Body RtBody 03-FEB-2018 11:10:27.22
+          Attr Super.Process = 1
+          Attr Super.ErrorSoftLimit = 50
+          Attr Super.ErrorHardLimit = 100
+          Attr Filename = "/dev/i2c-2"
+        EndBody
+      EndObject
+    EndObject
+    Object I2C_PCA9555 $ClassDef 2 03-FEB-2018 11:15:35.26
+      Body SysBody 03-FEB-2018 11:16:50.89
+        Attr Editor = 0
+        Attr Method = 0
+        Attr Flags = 18448
+      EndBody
+      Object RtBody $ObjBodyDef 1 03-FEB-2018 11:25:19.94
+        Body SysBody 03-FEB-2018 11:16:09.99
+          Attr StructName = "I2C_PCA9555"
+          Attr NextAix = "_X3"
+        EndBody
+        Object Super $Attribute 1 03-FEB-2018 11:17:07.56
+          Body SysBody 03-FEB-2018 11:17:19.59
+            Attr PgmName = "Super"
+            Attr Size = 352
+            Attr Flags = 393216
+            Attr TypeRef = "BaseComponent:Class-BaseIOCard"
+          EndBody
+        EndObject
+      EndObject
+      Object IoMethods $RtMethod 3 03-FEB-2018 11:20:02.45
+        Object IoCardInit $Method 10 03-FEB-2018 11:20:22.61
+          Body SysBody 03-FEB-2018 11:20:46.78
+            Attr MethodName = "I2C_PCA9555-IoCardInit"
+          EndBody
+        EndObject
+        Object IoCardClose $Method 9 03-FEB-2018 11:20:52.74
+          Body SysBody 03-FEB-2018 11:21:11.92
+            Attr MethodName = "I2C_PCA9555-IoCardClose"
+          EndBody
+        EndObject
+        Object IoCardRead $Method 8 03-FEB-2018 11:21:16.78
+          Body SysBody 03-FEB-2018 11:21:30.16
+            Attr MethodName = "I2C_PCA9555-IoCardRead"
+          EndBody
+        EndObject
+        Object IoCardWrite $Method 7 03-FEB-2018 11:21:36.41
+          Body SysBody 03-FEB-2018 11:21:47.29
+            Attr MethodName = "I2C_PCA9555-IoCardWrite"
+          EndBody
+        EndObject
+      EndObject
+      Object Template I2C_PCA9555 2148237312 31-DEC-1969 19:00:00.00
+        Body RtBody 03-FEB-2018 11:24:01.97
+          Attr Super.DataSheet = "http://www.ti.com/lit/ds/symlink/pca9555.pdf"
+          Attr Super.Process = 1
+          Attr Super.ErrorSoftLimit = 50
+          Attr Super.ErrorHardLimit = 100
+          Attr Super.MaxNoOfChannels = 16
+        EndBody
+      EndObject
+    EndObject
+  EndObject
+EndVolume
