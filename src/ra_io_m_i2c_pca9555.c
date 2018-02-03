@@ -27,93 +27,86 @@
 #include "rt_io_card_write.h"
 #include "rt_io_msg.h"
 
-typedef struct {
-    int socket;
-}   io_sLocal;
+#include "devices/pca9555.h"
 
 // Init method
 static pwr_tStatus IoCardInit(io_tCtx ctx, io_sAgent *ap, io_sRack *rp, io_sCard *cp)
 {
-    char config[2];
-    
-    cp->Address;
-    
-    errh_Info("CustomEthernetIO Initializing...");
-    local->socket = init_connection("10.0.0.108", 6969);
-    errh_Info("   socket fd: %d", local->socket);
-    return local->socket < 0 ? -1 : IO__SUCCESS;
+    pwr_sClass_I2C_Adapter *rack = (pwr_sClass_I2C_Adapter *)rp->op;
+    pwr_tInt32 i2cd = rack->FileDescriptor;
+
+    pwr_sClass_I2C_PCA9555 *card = (pwr_sClass_I2C_PCA9555 *)cp->op;
+    pwr_tInt32 addr = card->I2C_Address;
+
+    unsigned char config[2] = { 0x00, 0x00 };
+
+    int i;
+    for(i = 0; i < cp->ChanListSize; i++)
+    {
+        if(cp->chanlist[i].ChanClass == pwr_cClass_ChanDi) {
+            config[i >= 8] |= (1 << (i % 8));
+        }
+    }
+    int status = pca9555_config_write(i2cd, addr, config);
+
+    return status <= 0 ? -1 : IO__SUCCESS;
 }
 // Close method
 static pwr_tStatus IoCardClose(io_tCtx ctx, io_sAgent *ap, io_sRack *rp, io_sCard *cp)
 {
-    io_sLocal *local = cp->Local;
-    close(local->socket);
-    free(cp->Local);
-    return IO__SUCCESS;
+    pwr_sClass_I2C_Adapter *rack = (pwr_sClass_I2C_Adapter *)rp->op;
+    pwr_tInt32 i2cd = rack->FileDescriptor;
+
+    pwr_sClass_I2C_PCA9555 *card = (pwr_sClass_I2C_PCA9555 *)cp->op;
+    pwr_tInt32 addr = card->I2C_Address;
+
+    unsigned char buffer[2] = { 0x00, 0x00 };
+    int status = pca9555_write_output(i2cd, addr, buffer);
+
+    return status <= 0 ? -1 : IO__SUCCESS;
 }
 // Read Method
 static pwr_tStatus IoCardRead(io_tCtx ctx, io_sAgent *ap, io_sRack *rp, io_sCard *cp)
 {
-    io_sLocal *local = cp->Local;
-    //pwr_sClass_CustomEthernetIO *op = (pwr_sClass_CustomEthernetIO *)cp->op;
+    pwr_sClass_I2C_Adapter *rack = (pwr_sClass_I2C_Adapter *)rp->op;
+    pwr_tInt32 i2cd = rack->FileDescriptor;
 
-    i2ccmd_packet_t packet;
-    packet.actor[0] = 'i';
-    packet.actor[1] = 'o';
-    packet.actor[2] = '0';
-    packet.actor[3] = '1';
-    packet.cmd[0] = 'r';
-    packet.cmd[1] = 'r';
-    packet.data[0] = 0;
-    packet.data[1] = 0;
-    int sent = send_data(local->socket, &packet, sizeof(packet));
-    if(sent != sizeof(packet)) { return -1; }
-    int recieved = recv_data(local->socket, &packet.data[0], 2);
-    if(recieved != 2) { return -1; }
-    
-    unsigned short data = (unsigned short)packet.data[1] << 8 | packet.data[0];
-    errh_Info("CustomEthernetIO Read: %d", data);
-    for(int i = 0; i < 16; i++) {
+    pwr_sClass_I2C_PCA9555 *card = (pwr_sClass_I2C_PCA9555 *)cp->op;
+    pwr_tInt32 addr = card->I2C_Address;
+
+    unsigned char buffer[2] = { 0x00, 0x00 };
+    int status = pca9555_read_input(i2cd, addr, buffer);
+    if(status <= 0) { return -1; }
+    for(i = 0; i < cp->ChanListSize; i++)
+    {
         if(cp->chanlist[i].ChanClass == pwr_cClass_ChanDi) {
-            *(pwr_tBoolean *)cp->chanlist[i].vbp = (data & (1 << i)) > 0;
+            *(pwr_tBoolean *)cp->chanlist[i].vbp = (buffer[i >= 8] & (1 << (i % 8))) > 0;
         }
     }
-    
     return IO__SUCCESS;
 }
 // Write method
 static pwr_tStatus IoCardWrite(io_tCtx ctx, io_sAgent *ap, io_sRack *rp, io_sCard *cp)
 {
-    io_sLocal *local = cp->Local;
+    pwr_sClass_I2C_Adapter *rack = (pwr_sClass_I2C_Adapter *)rp->op;
+    pwr_tInt32 i2cd = rack->FileDescriptor;
 
-    i2ccmd_packet_t packet;
-    packet.actor[0] = 'i';
-    packet.actor[1] = 'o';
-    packet.actor[2] = '0';
-    packet.actor[3] = '1';
-    packet.cmd[0] = 'w';
-    packet.cmd[1] = 'w';
-    packet.data[0] = 0;
-    packet.data[1] = 0;
+    pwr_sClass_I2C_PCA9555 *card = (pwr_sClass_I2C_PCA9555 *)cp->op;
+    pwr_tInt32 addr = card->I2C_Address;
+
+    unsigned char buffer[2] = { 0x00, 0x00 };
     
-    for(int i = 0; i < 16; i++) {
+    for(int i = 0; i < cp->ChanListSize; i++) {
         if(cp->chanlist[i].ChanClass == pwr_cClass_ChanDo) {
-            if(i < 8) {
-                packet.data[0] |= *(pwr_tBoolean *)cp->chanlist[i].vbp << i;
-            } else {
-                packet.data[1] |= *(pwr_tBoolean *)cp->chanlist[i].vbp << (i - 8);
-            }
+            buffer[i >= 8] |= (1 << (i % 8));
         }
     }
-    
-    int sent = send_data(local->socket, &packet, sizeof(packet));
-    errh_Info("CustomEthernetIO Wrote length: %d", sent);
-    if(sent != sizeof(packet)) { return -1; }
-    
-    return IO__SUCCESS;
+
+    int status = pca9555_write_output(i2cd, addr, buffer);
+    return status <= 0 ? -1 : IO__SUCCESS;
 }
 // Every method should be registred here
-pwr_dExport pwr_BindIoUserMethods(CustomEthernetIO) = {
+pwr_dExport pwr_BindIoUserMethods(I2C_PCA9555) = {
     pwr_BindIoUserMethod(IoCardInit),
     pwr_BindIoUserMethod(IoCardClose),
     pwr_BindIoUserMethod(IoCardRead),
